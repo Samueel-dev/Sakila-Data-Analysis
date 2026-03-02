@@ -1,0 +1,59 @@
+"""
+Game Store Database Management System
+Author: Samueel-dev
+Description: Script to manage and search a game inventory using SQLite3.
+"""
+import sqlite3
+
+# Initialize database and establish connection
+connection = sqlite3.connect("store.db") 
+cursor = connection.cursor() 
+
+# Ensure a clean state by dropping the table if it already exists
+cursor.execute("DROP TABLE IF EXISTS games")
+
+# Create table with constraints
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS games (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+    title TEXT NOT NULL, 
+    price REAL
+)''')
+
+# Initial data seed
+my_games = [
+    ('Limbo', 12.4),
+    ('Sniper Man', 23),
+    ('Mario Bros', 49.99),
+    ('Call of Duty', 99.99)
+]
+cursor.executemany("INSERT INTO games (title, price) VALUES (?,?)", my_games)
+connection.commit()
+
+# Query games sorted by price in descending order
+cursor.execute("SELECT * FROM games ORDER BY price DESC") 
+
+print("--- Current Inventory (Sorted by Price) ---\n")
+for game in cursor.fetchall():
+    print(f"Title: {game[1]:<15} | Price: ${game[2]}")
+
+# Interactive search loop
+while True:
+    user_search = input("\nSearch for a game (or type 'exit' to quit): ").lower()
+    
+    if user_search == 'exit':
+        print("Closing store system... Goodbye!")
+        break
+        
+    # Partial match search using LIKE operator
+    cursor.execute("SELECT * FROM games WHERE LOWER(title) LIKE ?", (f"%{user_search}%",))
+    results = cursor.fetchall()
+    
+    if results:
+        print(f"\nResults found ({len(results)} matches):")
+        for match in results:
+            print(f"-> {match[1]:<15} | Price: ${match[2]}")
+    else:
+        print(f"\nNo games found matching '{user_search}'.")
+      
+connection.close()
