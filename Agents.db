@@ -1,0 +1,40 @@
+import sqlite3
+
+conexion = sqlite3.connect("agencia.db")
+cursor = conexion.cursor()
+
+cursor.executescript('''
+DROP TABLE IF EXISTS misions;
+DROP TABLE IF EXISTS agents;
+''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS agents (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)''')
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS misions (id INTEGER PRIMARY KEY AUTOINCREMENT, goal TEXT NOT null, agent_id INTEGER NOT NULL)''')
+
+#cursor.execute("DROP TABLE IF EXISTS misions")
+
+agentes = [
+('Trinity',),
+('Morpheus',),
+('Neo',)
+]
+
+mision = [
+('Hack Meta Server', 1),
+('Recover Database', 2)
+]
+
+cursor.executemany("INSERT INTO agents (name) VALUES (?)", agentes)
+cursor.executemany("INSERT INTO misions (goal, agent_id) VALUES (?,?)", mision)
+
+conexion.commit()
+
+cursor.execute("SELECT agents.name, misions.goal FROM  agents LEFT JOIN misions ON agents.id = misions.agent_id")
+
+for agente in cursor.fetchall():
+    name = agente[0]
+    goal = agente[1] if agente[1] is not None else "No mision assigned"
+    
+    print(f"Agent: {name:<15} | Objetive: {goal}")    
